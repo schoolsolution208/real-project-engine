@@ -20,11 +20,12 @@ export function ScreenHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-      </div>
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      {/* Visible title lives in the screen banner; kept here for semantics/SEO. */}
+      <h1 className="sr-only">{title}</h1>
+      <p className="min-w-0 truncate text-xs uppercase tracking-wider text-muted-foreground">
+        {description}
+      </p>
       {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
     </div>
   );
@@ -44,7 +45,7 @@ export function SectionCard({
   className?: string;
 }) {
   return (
-    <Card className={cn("glass-panel border-border/50 p-5", className)}>
+    <Card className={cn("bento-card premium-halo enter-soft border-0 !p-5", className)}>
       {(title ?? actions) ? (
         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -97,7 +98,7 @@ export function StatCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
     >
-      <Card className="glass-panel border-border/50 p-4">
+      <Card className="bento-card premium-halo hover-lift shimmer-sweep border-0 !p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -260,13 +261,13 @@ export function ProgressBar({
 }
 
 export const CHART_COLORS = [
-  "hsl(var(--aurora-violet))",
-  "hsl(var(--aurora-blue))",
-  "hsl(var(--aurora-teal))",
-  "hsl(var(--aurora-green))",
-  "hsl(var(--aurora-gold))",
-  "hsl(var(--aurora-rose))",
+  "hsl(var(--primary))",
+  "hsl(var(--primary-glow))",
+  "hsl(var(--accent-emerald))",
+  "hsl(var(--accent-amber))",
+  "hsl(var(--accent-pink))",
   "hsl(var(--aurora-cyan))",
+  "hsl(var(--aurora-teal))",
 ];
 
 export const chartAxisProps = {

@@ -102,7 +102,7 @@ function MarketingOverview() {
         description="Rolling 30-day performance across every channel, campaign and region."
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         <StatCard
           index={0}
           label="Spend"
