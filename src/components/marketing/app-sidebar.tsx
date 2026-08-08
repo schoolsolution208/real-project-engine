@@ -78,7 +78,7 @@ export function AppSidebar({
           "group/item relative flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm transition-colors duration-150",
           collapsed && "justify-center px-0",
           active
-            ? "bg-primary/20 font-medium text-foreground"
+            ? "bg-primary/[0.18] font-medium text-foreground"
             : "text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground",
         )}
       >
