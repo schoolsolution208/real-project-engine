@@ -441,17 +441,7 @@
      PREMIUM BUTTONS
      ======================================== */
   
-  .btn-premium {
-    @apply px-6 py-3 rounded-xl font-semibold transition-all duration-300;
-    background: var(--gradient-aurora);
-    color: white;
-    box-shadow: 0 4px 20px hsl(var(--aurora-violet) / 0.4);
-  }
 
-  .btn-premium:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px hsl(var(--aurora-violet) / 0.5);
-  }
 
   .btn-glass {
     @apply px-5 py-2.5 rounded-xl font-medium transition-all duration-300;
@@ -460,16 +450,7 @@
     @apply active:scale-95;
   }
 
-  .btn-outline-glow {
-    @apply px-5 py-2.5 rounded-xl font-medium transition-all duration-300;
-    @apply bg-transparent border-2 border-primary/60 text-primary;
-    @apply hover:bg-primary/10;
-    box-shadow: 0 0 20px hsl(var(--aurora-violet) / 0.2);
-  }
 
-  .btn-outline-glow:hover {
-    box-shadow: 0 0 30px hsl(var(--aurora-violet) / 0.4);
-  }
 
   /* ========================================
      PREMIUM CARDS
@@ -942,6 +923,77 @@ html { color-scheme: dark; }
     linear-gradient(120deg, hsl(var(--primary) / 0.10) 0%, transparent 38%),
     linear-gradient(300deg, hsl(var(--accent-pink) / 0.08) 0%, transparent 42%);
 }
+
+
+@utility icon3d--accent {
+  background-image:
+    linear-gradient(180deg, hsl(0 0% 100% / 0.20), hsl(0 0% 100% / 0.02) 55%, hsl(0 0% 0% / 0.12)),
+    linear-gradient(hsl(var(--primary)), hsl(var(--primary)));
+  border-color: hsl(var(--primary) / 0.55);
+}
+
+@utility btn-premium {
+  isolation: isolate;
+  overflow: hidden;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(110deg, transparent 25%, hsl(0 0% 100% / 0.28) 45%, transparent 65%);
+    transform: translateX(-120%);
+    transition: transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    pointer-events: none;
+    opacity: 0.7;
+  }
+  &:hover::after { transform: translateX(120%); }
+  & > * { position: relative; z-index: 2; }
+}
+
+@utility btn-glow--rich {
+  box-shadow:
+    0 1px 0 0 hsl(0 0% 100% / 0.28) inset,
+    0 0 0 1px hsl(var(--primary-glow) / 0.6),
+    0 18px 50px -14px hsl(var(--primary) / 0.95),
+    0 0 34px -6px hsl(var(--accent-pink) / 0.45);
+}
+
+@utility btn-outline-glow {
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.7), transparent 45%, hsl(var(--accent-pink) / 0.55));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 300ms ease;
+    pointer-events: none;
+  }
+  &:hover::before { opacity: 1; }
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 36px -18px hsl(var(--primary) / 0.9);
+  }
+}
+
+@utility skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, hsl(0 0% 100% / 0.06), transparent);
+    transform: translateX(-100%);
+    animation: sv-skeleton 1.6s infinite;
+  }
+}
+@keyframes sv-skeleton { 100% { transform: translateX(100%); } }
 
 @media (prefers-reduced-motion: reduce) {
   .enter-soft { animation: none !important; }
