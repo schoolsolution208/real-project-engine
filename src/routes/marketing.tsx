@@ -32,7 +32,7 @@ function MarketingLayout() {
   const active =
     [...marketingNav].sort((a, b) => b.to.length - a.to.length).find((item) =>
       item.to === "/marketing" ? pathname === "/marketing" : pathname.startsWith(item.to),
-    ) ?? marketingNav[0];
+    ) ?? marketingNav[0]!;
 
   const Icon = active.icon;
 
