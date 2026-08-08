@@ -261,13 +261,13 @@ export function ProgressBar({
 }
 
 export const CHART_COLORS = [
-  "hsl(var(--aurora-violet))",
-  "hsl(var(--aurora-blue))",
-  "hsl(var(--aurora-teal))",
-  "hsl(var(--aurora-green))",
-  "hsl(var(--aurora-gold))",
-  "hsl(var(--aurora-rose))",
+  "hsl(var(--primary))",
+  "hsl(var(--primary-glow))",
+  "hsl(var(--accent-emerald))",
+  "hsl(var(--accent-amber))",
+  "hsl(var(--accent-pink))",
   "hsl(var(--aurora-cyan))",
+  "hsl(var(--aurora-teal))",
 ];
 
 export const chartAxisProps = {
