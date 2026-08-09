@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Activity, ChevronDown, PanelLeftClose, PanelLeftOpen, Search, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -52,6 +52,51 @@ export function AppSidebar({
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [query, setQuery] = useState("");
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const navRef = useRef<HTMLElement | null>(null);
+  const searchRef = useRef<HTMLInputElement | null>(null);
+
+  const focusables = useCallback(
+    () =>
+      Array.from(
+        navRef.current?.querySelectorAll<HTMLElement>("[data-nav-focusable]") ?? [],
+      ).filter((el) => el.offsetParent !== null),
+    [],
+  );
+
+  const moveFocus = useCallback(
+    (dir: 1 | -1 | "first" | "last") => {
+      const items = focusables();
+      if (items.length === 0) return;
+      if (dir === "first") return items[0]!.focus();
+      if (dir === "last") return items[items.length - 1]!.focus();
+      const idx = items.indexOf(document.activeElement as HTMLElement);
+      const next = idx === -1 ? 0 : (idx + dir + items.length) % items.length;
+      items[next]!.focus();
+    },
+    [focusables],
+  );
+
+  // Global shortcuts: "/" or Cmd/Ctrl+K focuses search, Cmd/Ctrl+B toggles collapse.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      const typing =
+        !!t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        onToggleCollapsed();
+        return;
+      }
+      if ((mod && e.key.toLowerCase() === "k") || (e.key === "/" && !typing)) {
+        e.preventDefault();
+        if (collapsed) onToggleCollapsed();
+        requestAnimationFrame(() => searchRef.current?.focus());
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [collapsed, onToggleCollapsed]);
 
   const isActive = (to: string) =>
     to === "/marketing" ? pathname === "/marketing" : pathname.startsWith(to);
@@ -74,6 +119,8 @@ export function AppSidebar({
         to={item.to}
         onClick={onCloseMobile}
         title={item.label}
+        data-nav-focusable=""
+        aria-current={active ? "page" : undefined}
         className={cn(
           "group/item relative flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm transition-colors duration-150",
           collapsed && "justify-center px-0",
@@ -141,16 +188,54 @@ export function AppSidebar({
           <div className="focus-glow flex items-center gap-2 rounded-lg border border-sidebar-border bg-surface px-2.5 py-1.5">
             <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             <input
+              ref={searchRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Find a screen…"
+              onKeyDown={(e) => {
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  moveFocus("first");
+                } else if (e.key === "Escape") {
+                  e.preventDefault();
+                  if (query) setQuery("");
+                  else e.currentTarget.blur();
+                } else if (e.key === "Enter") {
+                  e.preventDefault();
+                  focusables()[0]?.click();
+                }
+              }}
+              aria-label="Search screens"
+              placeholder="Find a screen…  (/)"
               className="w-full bg-transparent text-xs outline-none placeholder:text-muted-foreground"
             />
           </div>
         </div>
       )}
 
-      <nav className="flex-1 space-y-3 overflow-y-auto px-2 py-3">
+      <nav
+        ref={navRef}
+        aria-label="Marketing navigation"
+        onKeyDown={(e) => {
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            moveFocus(1);
+          } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            moveFocus(-1);
+          } else if (e.key === "Home") {
+            e.preventDefault();
+            moveFocus("first");
+          } else if (e.key === "End") {
+            e.preventDefault();
+            moveFocus("last");
+          } else if (e.key === "Escape") {
+            e.preventDefault();
+            onCloseMobile();
+            searchRef.current?.focus();
+          }
+        }}
+        className="flex-1 space-y-3 overflow-y-auto px-2 py-3"
+      >
         <div className="space-y-0.5">
           {primaryNav.map((item) => (
             <ItemLink key={item.to} item={item} />
@@ -171,7 +256,18 @@ export function AppSidebar({
           return (
             <div key={group.label}>
               <button
+                data-nav-focusable=""
+                aria-expanded={open}
                 onClick={() => setOpenGroups((s) => ({ ...s, [group.label]: !open }))}
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowRight" && !open) {
+                    e.preventDefault();
+                    setOpenGroups((s) => ({ ...s, [group.label]: true }));
+                  } else if (e.key === "ArrowLeft" && open) {
+                    e.preventDefault();
+                    setOpenGroups((s) => ({ ...s, [group.label]: false }));
+                  }
+                }}
                 className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
               >
                 {group.label}
