@@ -36,7 +36,7 @@ async def main():
 
         # 3. persistence across reload
         await page.reload(wait_until="domcontentloaded")
-        await page.wait_for_timeout(400)
+        await page.wait_for_timeout(2500)
         w = (await page.locator("aside").first.bounding_box())["width"]
         check("collapsed state persists after reload", 68 <= w <= 76, w)
 
