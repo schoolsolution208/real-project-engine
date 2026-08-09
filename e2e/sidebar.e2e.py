@@ -21,6 +21,8 @@ async def main():
         await page.goto(f"{BASE}/marketing", wait_until="domcontentloaded")
         aside = page.locator("aside").first
         await aside.wait_for()
+        await page.wait_for_timeout(2500)
+        await page.locator("body").click(position={"x": 5, "y": 5})
 
         # 1. expanded width
         w = (await aside.bounding_box())["width"]
