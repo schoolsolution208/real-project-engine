@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/marketing/kit";
 import { navGroups, primaryNav, type MarketingNavItem } from "@/components/marketing/nav";
 
 const COLLAPSE_KEY = "sv:marketing:sidebar:collapsed";
+const GROUPS_KEY = "sv:marketing:sidebar:groups";
 
 export function useSidebarState() {
   const [collapsed, setCollapsed] = useState(false);
@@ -54,6 +55,28 @@ export function AppSidebar({
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const navRef = useRef<HTMLElement | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
+
+  // Restore persisted group expansion state.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(GROUPS_KEY);
+      if (raw) setOpenGroups(JSON.parse(raw) as Record<string, boolean>);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const setGroup = useCallback((label: string, open: boolean) => {
+    setOpenGroups((s) => {
+      const next = { ...s, [label]: open };
+      try {
+        localStorage.setItem(GROUPS_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, []);
 
   const focusables = useCallback(
     () =>
@@ -120,9 +143,11 @@ export function AppSidebar({
         onClick={onCloseMobile}
         title={item.label}
         data-nav-focusable=""
+        role="menuitem"
         aria-current={active ? "page" : undefined}
         className={cn(
           "group/item relative flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm transition-colors duration-150",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
           collapsed && "justify-center px-0",
           active
             ? "bg-primary/[0.18] font-medium text-foreground"
