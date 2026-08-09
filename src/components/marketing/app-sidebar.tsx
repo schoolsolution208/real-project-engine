@@ -7,6 +7,15 @@ import { StatusBadge } from "@/components/marketing/kit";
 import { navGroups, primaryNav, type MarketingNavItem } from "@/components/marketing/nav";
 
 const COLLAPSE_KEY = "sv:marketing:sidebar:collapsed";
+const GROUPS_KEY = "sv:marketing:sidebar:groups";
+
+function Kbd({ children }: { children: React.ReactNode }) {
+  return (
+    <kbd className="rounded border border-sidebar-border bg-surface px-1 py-[1px] font-sans text-[10px] leading-none text-muted-foreground">
+      {children}
+    </kbd>
+  );
+}
 
 export function useSidebarState() {
   const [collapsed, setCollapsed] = useState(false);
@@ -54,6 +63,33 @@ export function AppSidebar({
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const navRef = useRef<HTMLElement | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
+  const [modKey, setModKey] = useState("Ctrl");
+
+  useEffect(() => {
+    if (/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)) setModKey("⌘");
+  }, []);
+
+  // Restore persisted group expansion state.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(GROUPS_KEY);
+      if (raw) setOpenGroups(JSON.parse(raw) as Record<string, boolean>);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const setGroup = useCallback((label: string, open: boolean) => {
+    setOpenGroups((s) => {
+      const next = { ...s, [label]: open };
+      try {
+        localStorage.setItem(GROUPS_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, []);
 
   const focusables = useCallback(
     () =>
@@ -120,9 +156,11 @@ export function AppSidebar({
         onClick={onCloseMobile}
         title={item.label}
         data-nav-focusable=""
+        role="menuitem"
         aria-current={active ? "page" : undefined}
         className={cn(
           "group/item relative flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm transition-colors duration-150",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
           collapsed && "justify-center px-0",
           active
             ? "bg-primary/[0.18] font-medium text-foreground"
@@ -190,6 +228,11 @@ export function AppSidebar({
             <input
               ref={searchRef}
               value={query}
+              type="search"
+              role="searchbox"
+              autoComplete="off"
+              aria-controls="marketing-sidebar-nav"
+              aria-describedby="marketing-sidebar-hint"
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "ArrowDown") {
@@ -214,6 +257,8 @@ export function AppSidebar({
 
       <nav
         ref={navRef}
+        id="marketing-sidebar-nav"
+        role="menu"
         aria-label="Marketing navigation"
         onKeyDown={(e) => {
           if (e.key === "ArrowDown") {
@@ -236,7 +281,7 @@ export function AppSidebar({
         }}
         className="flex-1 space-y-3 overflow-y-auto px-2 py-3"
       >
-        <div className="space-y-0.5">
+        <div className="space-y-0.5" role="group" aria-label="Primary">
           {primaryNav.map((item) => (
             <ItemLink key={item.to} item={item} />
           ))}
@@ -246,7 +291,12 @@ export function AppSidebar({
           const open = filtered ? true : groupOpen(group.label, group.items);
           if (collapsed) {
             return (
-              <div key={group.label} className="space-y-0.5 border-t border-sidebar-border/60 pt-2">
+              <div
+                key={group.label}
+                role="group"
+                aria-label={group.label}
+                className="space-y-0.5 border-t border-sidebar-border/60 pt-2"
+              >
                 {group.items.map((item) => (
                   <ItemLink key={item.to} item={item} />
                 ))}
@@ -254,27 +304,31 @@ export function AppSidebar({
             );
           }
           return (
-            <div key={group.label}>
+            <div key={group.label} role="group" aria-label={group.label}>
               <button
                 data-nav-focusable=""
                 aria-expanded={open}
-                onClick={() => setOpenGroups((s) => ({ ...s, [group.label]: !open }))}
+                aria-controls={`sidebar-group-${group.label.replace(/\s+/g, "-").toLowerCase()}`}
+                onClick={() => setGroup(group.label, !open)}
                 onKeyDown={(e) => {
                   if (e.key === "ArrowRight" && !open) {
                     e.preventDefault();
-                    setOpenGroups((s) => ({ ...s, [group.label]: true }));
+                    setGroup(group.label, true);
                   } else if (e.key === "ArrowLeft" && open) {
                     e.preventDefault();
-                    setOpenGroups((s) => ({ ...s, [group.label]: false }));
+                    setGroup(group.label, false);
                   }
                 }}
-                className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+                className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
               >
                 {group.label}
                 <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", open && "rotate-180")} />
               </button>
               {open && (
-                <div className="mt-0.5 space-y-0.5">
+                <div
+                  id={`sidebar-group-${group.label.replace(/\s+/g, "-").toLowerCase()}`}
+                  className="mt-0.5 space-y-0.5"
+                >
                   {group.items.map((item) => (
                     <ItemLink key={item.to} item={item} />
                   ))}
@@ -291,12 +345,30 @@ export function AppSidebar({
             <Activity className="h-4 w-4" />
           </div>
         ) : (
-          <div className="flex items-center justify-between text-xs">
-            <span className="flex items-center gap-2 text-muted-foreground">
-              <Activity className="h-3.5 w-3.5" /> Campaign health
-            </span>
-            <StatusBadge value={health} />
-          </div>
+          <>
+            <div className="flex items-center justify-between text-xs">
+              <span className="flex items-center gap-2 text-muted-foreground">
+                <Activity className="h-3.5 w-3.5" /> Campaign health
+              </span>
+              <StatusBadge value={health} />
+            </div>
+            <p
+              id="marketing-sidebar-hint"
+              className="mt-2.5 flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground"
+            >
+              <Kbd>{modKey}</Kbd>
+              <Kbd>K</Kbd>
+              <span>search</span>
+              <span className="opacity-40">·</span>
+              <Kbd>{modKey}</Kbd>
+              <Kbd>B</Kbd>
+              <span>toggle</span>
+              <span className="opacity-40">·</span>
+              <Kbd>↑</Kbd>
+              <Kbd>↓</Kbd>
+              <span>navigate</span>
+            </p>
+          </>
         )}
       </div>
     </div>
