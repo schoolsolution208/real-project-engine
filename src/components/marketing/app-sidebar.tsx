@@ -63,6 +63,11 @@ export function AppSidebar({
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const navRef = useRef<HTMLElement | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
+  const [modKey, setModKey] = useState("Ctrl");
+
+  useEffect(() => {
+    if (/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)) setModKey("⌘");
+  }, []);
 
   // Restore persisted group expansion state.
   useEffect(() => {
