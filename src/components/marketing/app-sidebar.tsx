@@ -9,6 +9,14 @@ import { navGroups, primaryNav, type MarketingNavItem } from "@/components/marke
 const COLLAPSE_KEY = "sv:marketing:sidebar:collapsed";
 const GROUPS_KEY = "sv:marketing:sidebar:groups";
 
+function Kbd({ children }: { children: React.ReactNode }) {
+  return (
+    <kbd className="rounded border border-sidebar-border bg-surface px-1 py-[1px] font-sans text-[10px] leading-none text-muted-foreground">
+      {children}
+    </kbd>
+  );
+}
+
 export function useSidebarState() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
