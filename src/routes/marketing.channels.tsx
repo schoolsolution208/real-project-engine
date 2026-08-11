@@ -114,7 +114,7 @@ function ChannelsScreen() {
                     <TableRow key={c.id}>
                       <TableCell className="font-medium">{c.channel}</TableCell>
                       <TableCell className="w-48">
-                        <ProgressBar value={(toNum(c.spend) / maxSpend) * 100} />
+                        <ProgressBar value={toNum(c.spend)} max={maxSpend} tone="blue" />
                       </TableCell>
                       <TableCell className="text-right">{compactInr(toNum(c.spend))}</TableCell>
                       <TableCell className="text-right">{compactInr(toNum(c.revenue))}</TableCell>
