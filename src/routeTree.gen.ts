@@ -17,6 +17,7 @@ import { Route as MarketingAlertsRouteImport } from './routes/marketing.alerts'
 import { Route as MarketingAnalyticsRouteImport } from './routes/marketing.analytics'
 import { Route as MarketingApprovalsRouteImport } from './routes/marketing.approvals'
 import { Route as MarketingAuditRouteImport } from './routes/marketing.audit'
+import { Route as MarketingCalendarRouteImport } from './routes/marketing.calendar'
 import { Route as MarketingCampaignBuilderRouteImport } from './routes/marketing.campaign-builder'
 import { Route as MarketingCampaignsRouteImport } from './routes/marketing.campaigns'
 import { Route as MarketingChannelsRouteImport } from './routes/marketing.channels'
@@ -70,6 +71,11 @@ const MarketingApprovalsRoute = MarketingApprovalsRouteImport.update({
 const MarketingAuditRoute = MarketingAuditRouteImport.update({
   id: '/audit',
   path: '/audit',
+  getParentRoute: () => MarketingRoute,
+} as any)
+const MarketingCalendarRoute = MarketingCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
   getParentRoute: () => MarketingRoute,
 } as any)
 const MarketingCampaignBuilderRoute =
@@ -152,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/marketing/analytics': typeof MarketingAnalyticsRoute
   '/marketing/approvals': typeof MarketingApprovalsRoute
   '/marketing/audit': typeof MarketingAuditRoute
+  '/marketing/calendar': typeof MarketingCalendarRoute
   '/marketing/campaign-builder': typeof MarketingCampaignBuilderRoute
   '/marketing/campaigns': typeof MarketingCampaignsRoute
   '/marketing/channels': typeof MarketingChannelsRoute
@@ -175,6 +182,7 @@ export interface FileRoutesByTo {
   '/marketing/analytics': typeof MarketingAnalyticsRoute
   '/marketing/approvals': typeof MarketingApprovalsRoute
   '/marketing/audit': typeof MarketingAuditRoute
+  '/marketing/calendar': typeof MarketingCalendarRoute
   '/marketing/campaign-builder': typeof MarketingCampaignBuilderRoute
   '/marketing/campaigns': typeof MarketingCampaignsRoute
   '/marketing/channels': typeof MarketingChannelsRoute
@@ -200,6 +208,7 @@ export interface FileRoutesById {
   '/marketing/analytics': typeof MarketingAnalyticsRoute
   '/marketing/approvals': typeof MarketingApprovalsRoute
   '/marketing/audit': typeof MarketingAuditRoute
+  '/marketing/calendar': typeof MarketingCalendarRoute
   '/marketing/campaign-builder': typeof MarketingCampaignBuilderRoute
   '/marketing/campaigns': typeof MarketingCampaignsRoute
   '/marketing/channels': typeof MarketingChannelsRoute
@@ -226,6 +235,7 @@ export interface FileRouteTypes {
     | '/marketing/analytics'
     | '/marketing/approvals'
     | '/marketing/audit'
+    | '/marketing/calendar'
     | '/marketing/campaign-builder'
     | '/marketing/campaigns'
     | '/marketing/channels'
@@ -249,6 +259,7 @@ export interface FileRouteTypes {
     | '/marketing/analytics'
     | '/marketing/approvals'
     | '/marketing/audit'
+    | '/marketing/calendar'
     | '/marketing/campaign-builder'
     | '/marketing/campaigns'
     | '/marketing/channels'
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/marketing/analytics'
     | '/marketing/approvals'
     | '/marketing/audit'
+    | '/marketing/calendar'
     | '/marketing/campaign-builder'
     | '/marketing/campaigns'
     | '/marketing/channels'
@@ -351,6 +363,13 @@ declare module '@tanstack/react-router' {
       path: '/audit'
       fullPath: '/marketing/audit'
       preLoaderRoute: typeof MarketingAuditRouteImport
+      parentRoute: typeof MarketingRoute
+    }
+    '/marketing/calendar': {
+      id: '/marketing/calendar'
+      path: '/calendar'
+      fullPath: '/marketing/calendar'
+      preLoaderRoute: typeof MarketingCalendarRouteImport
       parentRoute: typeof MarketingRoute
     }
     '/marketing/campaign-builder': {
@@ -460,6 +479,7 @@ interface MarketingRouteChildren {
   MarketingAnalyticsRoute: typeof MarketingAnalyticsRoute
   MarketingApprovalsRoute: typeof MarketingApprovalsRoute
   MarketingAuditRoute: typeof MarketingAuditRoute
+  MarketingCalendarRoute: typeof MarketingCalendarRoute
   MarketingCampaignBuilderRoute: typeof MarketingCampaignBuilderRoute
   MarketingCampaignsRoute: typeof MarketingCampaignsRoute
   MarketingChannelsRoute: typeof MarketingChannelsRoute
@@ -483,6 +503,7 @@ const MarketingRouteChildren: MarketingRouteChildren = {
   MarketingAnalyticsRoute: MarketingAnalyticsRoute,
   MarketingApprovalsRoute: MarketingApprovalsRoute,
   MarketingAuditRoute: MarketingAuditRoute,
+  MarketingCalendarRoute: MarketingCalendarRoute,
   MarketingCampaignBuilderRoute: MarketingCampaignBuilderRoute,
   MarketingCampaignsRoute: MarketingCampaignsRoute,
   MarketingChannelsRoute: MarketingChannelsRoute,
