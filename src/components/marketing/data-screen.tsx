@@ -276,6 +276,12 @@ export function DataScreen<T extends MarketingTable>({
   const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
   const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" } | null>(null);
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState<number>(25);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [hiddenCols, setHiddenCols] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+
+  const visibleColumns = columns.filter((c) => !hiddenCols.has(c.key));
 
   const allRows = (query.data ?? []) as any[];
 
@@ -293,12 +299,30 @@ export function DataScreen<T extends MarketingTable>({
     return sort.dir === "asc" ? sorted : sorted.reverse();
   }, [allRows, search, filter, filterKey, searchKeys, sort]);
 
-  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
   const safePage = Math.min(page, pageCount - 1);
   const pageRows = useMemo(
-    () => rows.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE),
-    [rows, safePage],
+    () => rows.slice(safePage * pageSize, safePage * pageSize + pageSize),
+    [rows, safePage, pageSize],
   );
+
+  const pageIds = pageRows.map((r: any) => String(r.id));
+  const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.has(id));
+  const toggleRow = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const togglePage = () =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allPageSelected) pageIds.forEach((id) => next.delete(id));
+      else pageIds.forEach((id) => next.add(id));
+      return next;
+    });
+  const selectedRows = rows.filter((r: any) => selected.has(String(r.id)));
 
   const toggleSort = (key: string) => {
     setPage(0);
