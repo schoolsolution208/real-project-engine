@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle, Inbox, Loader2, PlugZap } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -196,10 +197,65 @@ export function ErrorState({ message }: { message: string }) {
   );
 }
 
-export function EmptyState({ message }: { message: string }) {
+export function EmptyState({
+  message,
+  title,
+  icon: Icon = Inbox,
+  action,
+}: {
+  message: string;
+  title?: string;
+  icon?: LucideIcon;
+  action?: ReactNode;
+}) {
   return (
-    <div className="rounded-lg border border-dashed border-border/60 p-10 text-center text-sm text-muted-foreground">
-      {message}
+    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border/60 bg-secondary/20 px-6 py-10 text-center">
+      <span className="grid h-11 w-11 place-items-center rounded-xl bg-secondary text-muted-foreground ring-1 ring-border">
+        <Icon className="h-5 w-5" />
+      </span>
+      {title ? <p className="text-sm font-semibold text-foreground">{title}</p> : null}
+      <p className="max-w-sm text-sm text-muted-foreground">{message}</p>
+      {action}
+    </div>
+  );
+}
+
+/**
+ * Truthful state for a channel/integration that has no backend connection in
+ * this deployment. Never renders fabricated activity.
+ */
+export function NotConnected({
+  name,
+  reason,
+  onConfigure,
+  className,
+}: {
+  name: string;
+  reason: string;
+  onConfigure?: () => void;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex flex-col items-start gap-3 rounded-xl border border-dashed border-status-warning/40 bg-status-warning/5 p-4",
+        className,
+      )}
+    >
+      <div className="flex items-center gap-2">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-status-warning/15 text-status-warning ring-1 ring-status-warning/30">
+          <PlugZap className="h-4 w-4" />
+        </span>
+        <div>
+          <p className="text-sm font-semibold text-foreground">{name} · Not connected</p>
+          <p className="text-xs text-muted-foreground">{reason}</p>
+        </div>
+      </div>
+      {onConfigure ? (
+        <Button size="sm" variant="outline" onClick={onConfigure}>
+          Configure integration
+        </Button>
+      ) : null}
     </div>
   );
 }
