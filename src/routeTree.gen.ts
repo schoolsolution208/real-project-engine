@@ -22,6 +22,7 @@ import { Route as MarketingContentRouteImport } from './routes/marketing.content
 import { Route as MarketingCreativesRouteImport } from './routes/marketing.creatives'
 import { Route as MarketingHierarchyRouteImport } from './routes/marketing.hierarchy'
 import { Route as MarketingLeadSourcesRouteImport } from './routes/marketing.lead-sources'
+import { Route as MarketingLeadsRouteImport } from './routes/marketing.leads'
 import { Route as MarketingOffersRouteImport } from './routes/marketing.offers'
 import { Route as MarketingPerformanceRouteImport } from './routes/marketing.performance'
 import { Route as MarketingReportsRouteImport } from './routes/marketing.reports'
@@ -95,6 +96,11 @@ const MarketingLeadSourcesRoute = MarketingLeadSourcesRouteImport.update({
   path: '/lead-sources',
   getParentRoute: () => MarketingRoute,
 } as any)
+const MarketingLeadsRoute = MarketingLeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => MarketingRoute,
+} as any)
 const MarketingOffersRoute = MarketingOffersRouteImport.update({
   id: '/offers',
   path: '/offers',
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/marketing/creatives': typeof MarketingCreativesRoute
   '/marketing/hierarchy': typeof MarketingHierarchyRoute
   '/marketing/lead-sources': typeof MarketingLeadSourcesRoute
+  '/marketing/leads': typeof MarketingLeadsRoute
   '/marketing/offers': typeof MarketingOffersRoute
   '/marketing/performance': typeof MarketingPerformanceRoute
   '/marketing/reports': typeof MarketingReportsRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/marketing/creatives': typeof MarketingCreativesRoute
   '/marketing/hierarchy': typeof MarketingHierarchyRoute
   '/marketing/lead-sources': typeof MarketingLeadSourcesRoute
+  '/marketing/leads': typeof MarketingLeadsRoute
   '/marketing/offers': typeof MarketingOffersRoute
   '/marketing/performance': typeof MarketingPerformanceRoute
   '/marketing/reports': typeof MarketingReportsRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/marketing/creatives': typeof MarketingCreativesRoute
   '/marketing/hierarchy': typeof MarketingHierarchyRoute
   '/marketing/lead-sources': typeof MarketingLeadSourcesRoute
+  '/marketing/leads': typeof MarketingLeadsRoute
   '/marketing/offers': typeof MarketingOffersRoute
   '/marketing/performance': typeof MarketingPerformanceRoute
   '/marketing/reports': typeof MarketingReportsRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/marketing/creatives'
     | '/marketing/hierarchy'
     | '/marketing/lead-sources'
+    | '/marketing/leads'
     | '/marketing/offers'
     | '/marketing/performance'
     | '/marketing/reports'
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/marketing/creatives'
     | '/marketing/hierarchy'
     | '/marketing/lead-sources'
+    | '/marketing/leads'
     | '/marketing/offers'
     | '/marketing/performance'
     | '/marketing/reports'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/marketing/creatives'
     | '/marketing/hierarchy'
     | '/marketing/lead-sources'
+    | '/marketing/leads'
     | '/marketing/offers'
     | '/marketing/performance'
     | '/marketing/reports'
@@ -352,6 +364,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarketingLeadSourcesRouteImport
       parentRoute: typeof MarketingRoute
     }
+    '/marketing/leads': {
+      id: '/marketing/leads'
+      path: '/leads'
+      fullPath: '/marketing/leads'
+      preLoaderRoute: typeof MarketingLeadsRouteImport
+      parentRoute: typeof MarketingRoute
+    }
     '/marketing/offers': {
       id: '/marketing/offers'
       path: '/offers'
@@ -408,6 +427,7 @@ interface MarketingRouteChildren {
   MarketingCreativesRoute: typeof MarketingCreativesRoute
   MarketingHierarchyRoute: typeof MarketingHierarchyRoute
   MarketingLeadSourcesRoute: typeof MarketingLeadSourcesRoute
+  MarketingLeadsRoute: typeof MarketingLeadsRoute
   MarketingOffersRoute: typeof MarketingOffersRoute
   MarketingPerformanceRoute: typeof MarketingPerformanceRoute
   MarketingReportsRoute: typeof MarketingReportsRoute
@@ -428,6 +448,7 @@ const MarketingRouteChildren: MarketingRouteChildren = {
   MarketingCreativesRoute: MarketingCreativesRoute,
   MarketingHierarchyRoute: MarketingHierarchyRoute,
   MarketingLeadSourcesRoute: MarketingLeadSourcesRoute,
+  MarketingLeadsRoute: MarketingLeadsRoute,
   MarketingOffersRoute: MarketingOffersRoute,
   MarketingPerformanceRoute: MarketingPerformanceRoute,
   MarketingReportsRoute: MarketingReportsRoute,
@@ -448,13 +469,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
