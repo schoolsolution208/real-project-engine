@@ -510,9 +510,51 @@ export function DataScreen<T extends MarketingTable>({
                 </SelectContent>
               </Select>
             ) : null}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" aria-label="Column visibility">
+                  <Columns3 className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuLabel>Visible columns</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {columns.map((c) => (
+                  <DropdownMenuCheckboxItem
+                    key={c.key}
+                    checked={!hiddenCols.has(c.key)}
+                    onCheckedChange={() =>
+                      setHiddenCols((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(c.key)) next.delete(c.key);
+                        else if (prev.size < columns.length - 1) next.add(c.key);
+                        return next;
+                      })
+                    }
+                  >
+                    {c.header}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         }
       >
+        {selected.size > 0 ? (
+          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2">
+            <span className="text-sm font-medium">{selected.size} selected</span>
+            <div className="flex-1" />
+            <Button size="sm" variant="outline" onClick={() => void exportSelected()}>
+              <Download className="mr-2 h-4 w-4" /> Export selected
+            </Button>
+            <Button size="sm" variant="destructive" onClick={() => setBulkDeleteOpen(true)}>
+              <Trash2 className="mr-2 h-4 w-4" /> Delete selected
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())} aria-label="Clear selection">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : null}
         <QueryState
           isLoading={query.isLoading}
           error={query.error}
@@ -524,12 +566,20 @@ export function DataScreen<T extends MarketingTable>({
               <Table style={{ minWidth }}>
                 <TableHeader>
                   <TableRow>
-                    {columns.map((c) => (
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={allPageSelected}
+                        onCheckedChange={togglePage}
+                        aria-label="Select all rows on this page"
+                      />
+                    </TableHead>
+                    {visibleColumns.map((c) => (
                       <TableHead key={c.key} className={c.align === "right" ? "text-right" : ""}>
                         <button
                           type="button"
                           onClick={() => toggleSort(c.key)}
-                          className="inline-flex items-center gap-1 hover:text-foreground"
+                          className="inline-flex items-center gap-1 rounded hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          aria-label={`Sort by ${c.header}`}
                         >
                           {c.header}
                           <ArrowUpDown
@@ -543,16 +593,27 @@ export function DataScreen<T extends MarketingTable>({
                 </TableHeader>
                 <TableBody>
                   {list.map((row: any) => (
-
-                    <TableRow key={row.id}>
-                      {columns.map((c) => (
+                    <TableRow key={row.id} data-state={selected.has(String(row.id)) ? "selected" : undefined}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selected.has(String(row.id))}
+                          onCheckedChange={() => toggleRow(String(row.id))}
+                          aria-label={`Select ${nameOf(row)}`}
+                        />
+                      </TableCell>
+                      {visibleColumns.map((c) => (
                         <TableCell key={c.key} className={c.align === "right" ? "text-right" : ""}>
                           {c.render(row)}
                         </TableCell>
                       ))}
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button size="icon" variant="ghost" onClick={() => openEdit(row)}>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => openEdit(row)}
+                            aria-label={`Edit ${nameOf(row)}`}
+                          >
                             <Pencil className="h-4 w-4" />
                           </Button>
                           <Button
@@ -560,6 +621,7 @@ export function DataScreen<T extends MarketingTable>({
                             variant="ghost"
                             onClick={() => setDeleteTarget(row)}
                             className="text-destructive"
+                            aria-label={`Delete ${nameOf(row)}`}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -572,18 +634,39 @@ export function DataScreen<T extends MarketingTable>({
             </div>
           )}
         </QueryState>
-        {rows.length > PAGE_SIZE ? (
-          <div className="flex items-center justify-between pt-4 text-sm text-muted-foreground">
-            <span>
-              Showing {safePage * PAGE_SIZE + 1}–{Math.min(rows.length, (safePage + 1) * PAGE_SIZE)}{" "}
-              of {rows.length}
-            </span>
+        {rows.length > 0 ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <span>
+                Showing {safePage * pageSize + 1}–{Math.min(rows.length, (safePage + 1) * pageSize)}{" "}
+                of {rows.length}
+              </span>
+              <Select
+                value={String(pageSize)}
+                onValueChange={(v) => {
+                  setPageSize(Number(v));
+                  setPage(0);
+                }}
+              >
+                <SelectTrigger className="h-8 w-[92px]" aria-label="Rows per page">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAGE_SIZES.map((s) => (
+                    <SelectItem key={s} value={String(s)}>
+                      {s} / page
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
                 variant="outline"
                 disabled={safePage === 0}
                 onClick={() => setPage(safePage - 1)}
+                aria-label="Previous page"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -595,6 +678,7 @@ export function DataScreen<T extends MarketingTable>({
                 variant="outline"
                 disabled={safePage >= pageCount - 1}
                 onClick={() => setPage(safePage + 1)}
+                aria-label="Next page"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
