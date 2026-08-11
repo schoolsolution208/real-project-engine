@@ -433,6 +433,49 @@ export function DataScreen<T extends MarketingTable>({
     toast.success(`Exported ${rows.length} rows.`);
   };
 
+  const exportSelected = async () => {
+    const csv = buildCsv(selectedRows);
+    if (!csv) {
+      toast.error("Nothing to export.");
+      return;
+    }
+    await recordAudit({
+      actor: "Marketing Manager",
+      action: "export",
+      entity_type: entityLabel,
+      entity_name: `${selectedRows.length} selected rows`,
+      module,
+      details: `Exported ${selectedRows.length} selected ${entityLabel.toLowerCase()} rows to CSV`,
+    });
+    downloadCsv(csvFilename(`${String(table)}-selection`), csv);
+    toast.success(`Exported ${selectedRows.length} rows.`);
+  };
+
+  const confirmBulkDelete = async () => {
+    const targets = [...selectedRows];
+    let ok = 0;
+    for (const row of targets) {
+      try {
+        await remove.mutateAsync(String((row as any).id));
+        ok += 1;
+        void recordAudit({
+          actor: "Marketing Manager",
+          action: "delete",
+          entity_type: entityLabel,
+          entity_id: String((row as any).id),
+          entity_name: nameOf(row),
+          module,
+          details: "Bulk delete",
+        });
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Delete failed.");
+      }
+    }
+    setBulkDeleteOpen(false);
+    setSelected(new Set());
+    if (ok > 0) toast.success(`Deleted ${ok} ${entityLabel.toLowerCase()} record(s).`);
+  };
+
 
   return (
     <div className="space-y-6">
