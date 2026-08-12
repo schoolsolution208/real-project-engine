@@ -3,6 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
+  ArrowUpDown,
+  Columns3,
   Download,
   IndianRupee,
   Layers,
@@ -16,6 +18,7 @@ import {
   Target,
   Trash2,
   TrendingUp,
+  X,
 } from "lucide-react";
 
 import {
