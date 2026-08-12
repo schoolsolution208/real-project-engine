@@ -398,6 +398,42 @@ function CampaignsScreen() {
     toast.success(`Exported ${filtered.length} campaigns`);
   };
 
+  const exportSelected = async () => {
+    if (selectedRows.length === 0) return;
+    await recordAudit({
+      actor: "marketing_manager",
+      action: "export",
+      entity_type: "campaign",
+      module: "campaigns",
+      details: `Exported ${selectedRows.length} selected campaigns to CSV`,
+    });
+    downloadCsv(csvFilename("software-vala-campaigns-selection"), toCsv(selectedRows));
+    toast.success(`Exported ${selectedRows.length} campaigns`);
+  };
+
+  const confirmBulkDelete = async () => {
+    const targets = [...selectedRows];
+    setBulkDeleteOpen(false);
+    for (const target of targets) {
+      try {
+        await remove.mutateAsync(target.id);
+        await recordAudit({
+          actor: "marketing_manager",
+          action: "delete",
+          entity_type: "campaign",
+          entity_id: target.id,
+          entity_name: target.name,
+          module: "campaigns",
+          details: "Campaign deleted (bulk)",
+        });
+      } catch (e) {
+        toast.error((e as Error).message);
+      }
+    }
+    setSelected(new Set());
+    toast.success(`Deleted ${targets.length} campaigns`);
+  };
+
 
   const refreshAll = () => {
     void Promise.all([
