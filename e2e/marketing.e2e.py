@@ -36,6 +36,19 @@ def attach(page):
     page.on("pageerror", lambda e: page_errors.append(f"{page.url} :: {e}"))
     page.on("response", lambda r: net_errors.append(f"{r.status} {r.url}") if r.status >= 400 else None)
 
+async def open_nav(page, href, label):
+    """Sidebar groups are collapsed by default; expand until the link is visible."""
+    link = page.locator(f'a[href="{href}"]')
+    if not await link.count() or not await link.first.is_visible():
+        for i in range(await page.locator('[role=group] > button, [role=group] button[aria-expanded]').count()):
+            btn = page.locator('[role=group] > button, [role=group] button[aria-expanded]').nth(i)
+            if await btn.get_attribute("aria-expanded") == "false":
+                await btn.click(); await page.wait_for_timeout(250)
+            if await link.count() and await link.first.is_visible():
+                break
+    await link.first.click()
+
+
 async def settle(page, ms=900):
     await page.wait_for_load_state("networkidle")
     await page.wait_for_timeout(ms)
@@ -60,13 +73,14 @@ async def main():
         # --- Dashboard KPIs + charts ---
         await page.goto(BASE + "/marketing", wait_until="domcontentloaded"); await settle(page)
         body = await page.inner_text("body")
-        check("dashboard KPI cards", all(k in body for k in ["Spend", "Revenue", "ROAS", "Leads", "Conversions", "CTR"]))
+        low = body.lower()
+        check("dashboard KPI cards", all(k in low for k in ["spend", "revenue", "roas", "leads", "conversions", "ctr"]))
         check("dashboard charts render", await page.locator("svg.recharts-surface").count() >= 2)
         check("dashboard top campaigns table", await page.locator("table tbody tr").count() > 0)
         await page.screenshot(path=str(OUT / "01_dashboard.png"))
 
         # --- Sidebar navigation: Dashboard -> Campaigns ---
-        await page.get_by_role("menuitem", name="Campaigns", exact=True).first.click()
+        await open_nav(page, "/marketing/campaigns", "Campaigns")
         await settle(page)
         check("nav to campaigns", page.url.endswith("/marketing/campaigns"), page.url)
 
@@ -159,9 +173,8 @@ async def main():
             scroll_w = await rp.evaluate("document.documentElement.scrollWidth")
             check(f"{label} no horizontal overflow", scroll_w <= w + 2, f"scrollWidth={scroll_w}")
             if label == "mobile":
-                trigger = rp.get_by_role("button", name="Open menu")
-                await trigger.click(); await rp.wait_for_timeout(600)
-                check("mobile drawer opens", await rp.get_by_role("menuitem", name="Campaigns", exact=True).first.is_visible())
+                await rp.get_by_role("button", name="Open menu").click(); await rp.wait_for_timeout(600)
+                check("mobile drawer opens", await rp.get_by_role("menuitem", name="Overview").first.is_visible())
             await rp.screenshot(path=str(OUT / f"06_{label}.png"))
             await rp.close()
 
