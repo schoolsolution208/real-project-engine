@@ -216,6 +216,50 @@ function CampaignsScreen() {
     [rows, search, status, channel],
   );
 
+  const visibleColumns = CAMPAIGN_COLUMNS.filter((c) => !hiddenCols.has(c.key));
+
+  const sorted = useMemo(() => {
+    if (!sortKey) return filtered;
+    const dir = sortDir === "asc" ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      const av = sortValue(a, sortKey);
+      const bv = sortValue(b, sortKey);
+      if (av === bv) return 0;
+      return av > bv ? dir : -dir;
+    });
+  }, [filtered, sortKey, sortDir]);
+
+  const toggleSort = (key: ColumnKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+      return;
+    }
+    setSortKey(key);
+    setSortDir("asc");
+  };
+
+  const toggleColumn = (key: ColumnKey) =>
+    setHiddenCols((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+
+  const toggleRow = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const allVisibleSelected = sorted.length > 0 && sorted.every((c) => selected.has(c.id));
+  const selectedRows = sorted.filter((c) => selected.has(c.id));
+
+  const toggleAll = () =>
+    setSelected(allVisibleSelected ? new Set() : new Set(sorted.map((c) => c.id)));
+
   const totals = filtered.reduce(
     (acc, c) => ({
       budget: acc.budget + Number(c.budget),
