@@ -3,6 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
+  ArrowUpDown,
+  Columns3,
   Download,
   IndianRupee,
   Layers,
@@ -16,6 +18,7 @@ import {
   Target,
   Trash2,
   TrendingUp,
+  X,
 } from "lucide-react";
 
 import {
@@ -62,6 +65,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   recordAudit,
   tableQuery,
@@ -94,6 +106,41 @@ export const Route = createFileRoute("/marketing/campaigns")({
 });
 
 type Campaign = Row<"marketing_campaigns">;
+
+/** Columns the operator can sort by and hide. Order matches the table. */
+const CAMPAIGN_COLUMNS = [
+  { key: "name", label: "Campaign", sortable: true, lockVisible: true },
+  { key: "channel", label: "Channel", sortable: true },
+  { key: "status", label: "Status", sortable: true },
+  { key: "flight", label: "Flight", sortable: true },
+  { key: "pacing", label: "Budget pacing", sortable: true },
+  { key: "leads", label: "Leads", sortable: true, numeric: true },
+  { key: "ctr", label: "CTR", sortable: true, numeric: true },
+  { key: "roas", label: "ROAS", sortable: true, numeric: true },
+] as const;
+
+type ColumnKey = (typeof CAMPAIGN_COLUMNS)[number]["key"];
+
+function sortValue(c: Campaign, key: ColumnKey): string | number {
+  switch (key) {
+    case "name":
+      return c.name.toLowerCase();
+    case "channel":
+      return c.channel.toLowerCase();
+    case "status":
+      return c.status.toLowerCase();
+    case "flight":
+      return c.start_date;
+    case "pacing":
+      return Number(c.spend) / Math.max(Number(c.budget), 1);
+    case "leads":
+      return Number(c.leads);
+    case "ctr":
+      return ctr(Number(c.clicks), Number(c.impressions));
+    case "roas":
+      return roas(Number(c.revenue), Number(c.spend));
+  }
+}
 
 function toCsv(rows: Campaign[]) {
   const headers = [
@@ -142,6 +189,11 @@ function CampaignsScreen() {
   const [form, setForm] = useState<CampaignFormValues | null>(null);
   const [detail, setDetail] = useState<Campaign | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Campaign | null>(null);
+  const [sortKey, setSortKey] = useState<ColumnKey | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [hiddenCols, setHiddenCols] = useState<Set<ColumnKey>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
   const rows = campaigns.data ?? [];
 
@@ -163,6 +215,50 @@ function CampaignsScreen() {
       }),
     [rows, search, status, channel],
   );
+
+  const visibleColumns = CAMPAIGN_COLUMNS.filter((c) => !hiddenCols.has(c.key));
+
+  const sorted = useMemo(() => {
+    if (!sortKey) return filtered;
+    const dir = sortDir === "asc" ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      const av = sortValue(a, sortKey);
+      const bv = sortValue(b, sortKey);
+      if (av === bv) return 0;
+      return av > bv ? dir : -dir;
+    });
+  }, [filtered, sortKey, sortDir]);
+
+  const toggleSort = (key: ColumnKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+      return;
+    }
+    setSortKey(key);
+    setSortDir("asc");
+  };
+
+  const toggleColumn = (key: ColumnKey) =>
+    setHiddenCols((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+
+  const toggleRow = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const allVisibleSelected = sorted.length > 0 && sorted.every((c) => selected.has(c.id));
+  const selectedRows = sorted.filter((c) => selected.has(c.id));
+
+  const toggleAll = () =>
+    setSelected(allVisibleSelected ? new Set() : new Set(sorted.map((c) => c.id)));
 
   const totals = filtered.reduce(
     (acc, c) => ({
@@ -300,6 +396,42 @@ function CampaignsScreen() {
     });
     downloadCsv(csvFilename("software-vala-campaigns"), toCsv(filtered));
     toast.success(`Exported ${filtered.length} campaigns`);
+  };
+
+  const exportSelected = async () => {
+    if (selectedRows.length === 0) return;
+    await recordAudit({
+      actor: "marketing_manager",
+      action: "export",
+      entity_type: "campaign",
+      module: "campaigns",
+      details: `Exported ${selectedRows.length} selected campaigns to CSV`,
+    });
+    downloadCsv(csvFilename("software-vala-campaigns-selection"), toCsv(selectedRows));
+    toast.success(`Exported ${selectedRows.length} campaigns`);
+  };
+
+  const confirmBulkDelete = async () => {
+    const targets = [...selectedRows];
+    setBulkDeleteOpen(false);
+    for (const target of targets) {
+      try {
+        await remove.mutateAsync(target.id);
+        await recordAudit({
+          actor: "marketing_manager",
+          action: "delete",
+          entity_type: "campaign",
+          entity_id: target.id,
+          entity_name: target.name,
+          module: "campaigns",
+          details: "Campaign deleted (bulk)",
+        });
+      } catch (e) {
+        toast.error((e as Error).message);
+      }
+    }
+    setSelected(new Set());
+    toast.success(`Deleted ${targets.length} campaigns`);
   };
 
 

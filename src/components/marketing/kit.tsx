@@ -46,7 +46,7 @@ export function SectionCard({
   className?: string;
 }) {
   return (
-    <Card className={cn("bento-card premium-halo enter-soft border-0 !p-5", className)}>
+    <Card className={cn("bento-card premium-halo enter-soft min-w-0 border-0 !p-5", className)}>
       {(title ?? actions) ? (
         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div>
