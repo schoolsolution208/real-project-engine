@@ -189,6 +189,11 @@ function CampaignsScreen() {
   const [form, setForm] = useState<CampaignFormValues | null>(null);
   const [detail, setDetail] = useState<Campaign | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Campaign | null>(null);
+  const [sortKey, setSortKey] = useState<ColumnKey | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [hiddenCols, setHiddenCols] = useState<Set<ColumnKey>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
   const rows = campaigns.data ?? [];
 
