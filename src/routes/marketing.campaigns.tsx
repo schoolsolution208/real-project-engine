@@ -107,6 +107,41 @@ export const Route = createFileRoute("/marketing/campaigns")({
 
 type Campaign = Row<"marketing_campaigns">;
 
+/** Columns the operator can sort by and hide. Order matches the table. */
+const CAMPAIGN_COLUMNS = [
+  { key: "name", label: "Campaign", sortable: true, lockVisible: true },
+  { key: "channel", label: "Channel", sortable: true },
+  { key: "status", label: "Status", sortable: true },
+  { key: "flight", label: "Flight", sortable: true },
+  { key: "pacing", label: "Budget pacing", sortable: true },
+  { key: "leads", label: "Leads", sortable: true, numeric: true },
+  { key: "ctr", label: "CTR", sortable: true, numeric: true },
+  { key: "roas", label: "ROAS", sortable: true, numeric: true },
+] as const;
+
+type ColumnKey = (typeof CAMPAIGN_COLUMNS)[number]["key"];
+
+function sortValue(c: Campaign, key: ColumnKey): string | number {
+  switch (key) {
+    case "name":
+      return c.name.toLowerCase();
+    case "channel":
+      return c.channel.toLowerCase();
+    case "status":
+      return c.status.toLowerCase();
+    case "flight":
+      return c.start_date;
+    case "pacing":
+      return Number(c.spend) / Math.max(Number(c.budget), 1);
+    case "leads":
+      return Number(c.leads);
+    case "ctr":
+      return ctr(Number(c.clicks), Number(c.impressions));
+    case "roas":
+      return roas(Number(c.revenue), Number(c.spend));
+  }
+}
+
 function toCsv(rows: Campaign[]) {
   const headers = [
     "code",
