@@ -645,19 +645,31 @@ function CampaignsScreen() {
                         className="cursor-pointer"
                         onClick={() => setDetail(c)}
                       >
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={selected.has(c.id)}
+                            onCheckedChange={() => toggleRow(c.id)}
+                            aria-label={`Select ${c.name}`}
+                          />
+                        </TableCell>
+                        {!hiddenCols.has("name") && (
                         <TableCell>
                           <p className="font-medium">{c.name}</p>
                           <p className="text-xs text-muted-foreground">
                             {c.code} · {c.objective.replace(/_/g, " ")} · {groups} ad groups
                           </p>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">{c.channel}</TableCell>
+                        </TableCell>)}
+                        {!hiddenCols.has("channel") && (
+                        <TableCell className="text-muted-foreground">{c.channel}</TableCell>)}
+                        {!hiddenCols.has("status") && (
                         <TableCell>
                           <StatusBadge value={c.status} />
-                        </TableCell>
+                        </TableCell>)}
+                        {!hiddenCols.has("flight") && (
                         <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
                           {shortDate(c.start_date)} → {shortDate(c.end_date)}
-                        </TableCell>
+                        </TableCell>)}
+                        {!hiddenCols.has("pacing") && (
                         <TableCell>
                           <ProgressBar
                             value={Number(c.spend)}
@@ -667,14 +679,17 @@ function CampaignsScreen() {
                           <p className="mt-1 text-[11px] text-muted-foreground">
                             {compactInr(Number(c.spend))} / {compactInr(Number(c.budget))}
                           </p>
-                        </TableCell>
-                        <TableCell className="text-right">{num(Number(c.leads))}</TableCell>
+                        </TableCell>)}
+                        {!hiddenCols.has("leads") && (
+                        <TableCell className="text-right">{num(Number(c.leads))}</TableCell>)}
+                        {!hiddenCols.has("ctr") && (
                         <TableCell className="text-right">
                           {pct(ctr(Number(c.clicks), Number(c.impressions)), 2)}
-                        </TableCell>
+                        </TableCell>)}
+                        {!hiddenCols.has("roas") && (
                         <TableCell className="text-right font-medium text-status-success">
                           {roas(Number(c.revenue), Number(c.spend)).toFixed(2)}x
-                        </TableCell>
+                        </TableCell>)}
                         <TableCell onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-1">
                             {c.status === "active" ? (
@@ -714,6 +729,7 @@ function CampaignsScreen() {
                   })}
                 </TableBody>
               </Table>
+              </div>
             </div>
           )}
         </QueryState>
