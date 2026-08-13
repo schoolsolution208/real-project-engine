@@ -561,28 +561,100 @@ function CampaignsScreen() {
                 ))}
               </SelectContent>
             </Select>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="h-9 w-9" aria-label="Column visibility">
+                  <Columns3 className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel>Visible columns</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {CAMPAIGN_COLUMNS.map((col) => (
+                  <DropdownMenuCheckboxItem
+                    key={col.key}
+                    checked={!hiddenCols.has(col.key)}
+                    disabled={"lockVisible" in col && col.lockVisible}
+                    onCheckedChange={() => toggleColumn(col.key)}
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    {col.label}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         }
       >
         <QueryState
           isLoading={campaigns.isLoading}
           error={campaigns.error}
-          data={filtered}
+          data={sorted}
           emptyMessage="No campaigns match these filters."
         >
           {(data) => (
-            <div className="overflow-x-auto">
+            <div className="space-y-3">
+              {selectedRows.length > 0 ? (
+                <div
+                  className="flex flex-wrap items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2"
+                  role="region"
+                  aria-label="Bulk actions"
+                >
+                  <span className="text-sm font-medium">{selectedRows.length} selected</span>
+                  <div className="flex-1" />
+                  <Button size="sm" variant="outline" onClick={() => void exportSelected()}>
+                    <Download className="h-4 w-4" />
+                    Export selected
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => setBulkDeleteOpen(true)}>
+                    <Trash2 className="h-4 w-4" />
+                    Delete selected
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    aria-label="Clear selection"
+                    onClick={() => setSelected(new Set())}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : null}
+              <div className="overflow-x-auto">
               <Table className="min-w-[1180px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Campaign</TableHead>
-                    <TableHead>Channel</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Flight</TableHead>
-                    <TableHead className="w-40">Budget pacing</TableHead>
-                    <TableHead className="text-right">Leads</TableHead>
-                    <TableHead className="text-right">CTR</TableHead>
-                    <TableHead className="text-right">ROAS</TableHead>
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={allVisibleSelected}
+                        onCheckedChange={toggleAll}
+                        aria-label="Select all campaigns"
+                      />
+                    </TableHead>
+                    {visibleColumns.map((col) => (
+                      <TableHead
+                        key={col.key}
+                        className={
+                          "numeric" in col && col.numeric
+                            ? "text-right"
+                            : col.key === "pacing"
+                              ? "w-40"
+                              : undefined
+                        }
+                      >
+                        <button
+                          type="button"
+                          onClick={() => toggleSort(col.key)}
+                          aria-label={`Sort by ${col.label}`}
+                          className={`inline-flex items-center gap-1 rounded transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                            sortKey === col.key ? "text-foreground" : ""
+                          }`}
+                        >
+                          {col.label}
+                          <ArrowUpDown className="h-3 w-3 opacity-60" />
+                        </button>
+                      </TableHead>
+                    ))}
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -595,19 +667,31 @@ function CampaignsScreen() {
                         className="cursor-pointer"
                         onClick={() => setDetail(c)}
                       >
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={selected.has(c.id)}
+                            onCheckedChange={() => toggleRow(c.id)}
+                            aria-label={`Select ${c.name}`}
+                          />
+                        </TableCell>
+                        {!hiddenCols.has("name") && (
                         <TableCell>
                           <p className="font-medium">{c.name}</p>
                           <p className="text-xs text-muted-foreground">
                             {c.code} · {c.objective.replace(/_/g, " ")} · {groups} ad groups
                           </p>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">{c.channel}</TableCell>
+                        </TableCell>)}
+                        {!hiddenCols.has("channel") && (
+                        <TableCell className="text-muted-foreground">{c.channel}</TableCell>)}
+                        {!hiddenCols.has("status") && (
                         <TableCell>
                           <StatusBadge value={c.status} />
-                        </TableCell>
+                        </TableCell>)}
+                        {!hiddenCols.has("flight") && (
                         <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
                           {shortDate(c.start_date)} → {shortDate(c.end_date)}
-                        </TableCell>
+                        </TableCell>)}
+                        {!hiddenCols.has("pacing") && (
                         <TableCell>
                           <ProgressBar
                             value={Number(c.spend)}
@@ -617,14 +701,17 @@ function CampaignsScreen() {
                           <p className="mt-1 text-[11px] text-muted-foreground">
                             {compactInr(Number(c.spend))} / {compactInr(Number(c.budget))}
                           </p>
-                        </TableCell>
-                        <TableCell className="text-right">{num(Number(c.leads))}</TableCell>
+                        </TableCell>)}
+                        {!hiddenCols.has("leads") && (
+                        <TableCell className="text-right">{num(Number(c.leads))}</TableCell>)}
+                        {!hiddenCols.has("ctr") && (
                         <TableCell className="text-right">
                           {pct(ctr(Number(c.clicks), Number(c.impressions)), 2)}
-                        </TableCell>
+                        </TableCell>)}
+                        {!hiddenCols.has("roas") && (
                         <TableCell className="text-right font-medium text-status-success">
                           {roas(Number(c.revenue), Number(c.spend)).toFixed(2)}x
-                        </TableCell>
+                        </TableCell>)}
                         <TableCell onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-1">
                             {c.status === "active" ? (
@@ -664,6 +751,7 @@ function CampaignsScreen() {
                   })}
                 </TableBody>
               </Table>
+              </div>
             </div>
           )}
         </QueryState>
@@ -703,6 +791,22 @@ function CampaignsScreen() {
           ) : null}
         </DialogContent>
       </Dialog>
+
+      {/* bulk delete */}
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedRows.length} campaigns?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the selected campaigns and is recorded in the audit trail.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void confirmBulkDelete()}>Delete all</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* delete */}
       <AlertDialog open={pendingDelete !== null} onOpenChange={(o) => !o && setPendingDelete(null)}>
