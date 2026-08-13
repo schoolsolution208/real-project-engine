@@ -561,6 +561,28 @@ function CampaignsScreen() {
                 ))}
               </SelectContent>
             </Select>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="h-9 w-9" aria-label="Column visibility">
+                  <Columns3 className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel>Visible columns</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {CAMPAIGN_COLUMNS.map((col) => (
+                  <DropdownMenuCheckboxItem
+                    key={col.key}
+                    checked={!hiddenCols.has(col.key)}
+                    disabled={"lockVisible" in col && col.lockVisible}
+                    onCheckedChange={() => toggleColumn(col.key)}
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    {col.label}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         }
       >
