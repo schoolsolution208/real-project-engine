@@ -567,22 +567,72 @@ function CampaignsScreen() {
         <QueryState
           isLoading={campaigns.isLoading}
           error={campaigns.error}
-          data={filtered}
+          data={sorted}
           emptyMessage="No campaigns match these filters."
         >
           {(data) => (
-            <div className="overflow-x-auto">
+            <div className="space-y-3">
+              {selectedRows.length > 0 ? (
+                <div
+                  className="flex flex-wrap items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2"
+                  role="region"
+                  aria-label="Bulk actions"
+                >
+                  <span className="text-sm font-medium">{selectedRows.length} selected</span>
+                  <div className="flex-1" />
+                  <Button size="sm" variant="outline" onClick={() => void exportSelected()}>
+                    <Download className="h-4 w-4" />
+                    Export selected
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => setBulkDeleteOpen(true)}>
+                    <Trash2 className="h-4 w-4" />
+                    Delete selected
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    aria-label="Clear selection"
+                    onClick={() => setSelected(new Set())}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : null}
+              <div className="overflow-x-auto">
               <Table className="min-w-[1180px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Campaign</TableHead>
-                    <TableHead>Channel</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Flight</TableHead>
-                    <TableHead className="w-40">Budget pacing</TableHead>
-                    <TableHead className="text-right">Leads</TableHead>
-                    <TableHead className="text-right">CTR</TableHead>
-                    <TableHead className="text-right">ROAS</TableHead>
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={allVisibleSelected}
+                        onCheckedChange={toggleAll}
+                        aria-label="Select all campaigns"
+                      />
+                    </TableHead>
+                    {visibleColumns.map((col) => (
+                      <TableHead
+                        key={col.key}
+                        className={
+                          "numeric" in col && col.numeric
+                            ? "text-right"
+                            : col.key === "pacing"
+                              ? "w-40"
+                              : undefined
+                        }
+                      >
+                        <button
+                          type="button"
+                          onClick={() => toggleSort(col.key)}
+                          aria-label={`Sort by ${col.label}`}
+                          className={`inline-flex items-center gap-1 rounded transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                            sortKey === col.key ? "text-foreground" : ""
+                          }`}
+                        >
+                          {col.label}
+                          <ArrowUpDown className="h-3 w-3 opacity-60" />
+                        </button>
+                      </TableHead>
+                    ))}
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
