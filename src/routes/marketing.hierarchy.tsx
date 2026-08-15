@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronRight, Image as ImageIcon, Layers, Megaphone } from "lucide-react";
 
@@ -85,7 +85,24 @@ function HierarchyScreen() {
         />
       </div>
 
-      <SectionCard title="Structure" description="Expand a campaign to see its ad groups and creatives.">
+      <SectionCard
+        title="Structure"
+        description="Expand a campaign to see its ad groups and creatives."
+        actions={
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setOpen(Object.fromEntries(rows.map((c) => [c.id, true])))}
+            >
+              Expand all
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setOpen({})}>
+              Collapse all
+            </Button>
+          </div>
+        }
+      >
         <QueryState
           isLoading={campaigns.isLoading}
           error={campaigns.error}
@@ -93,17 +110,20 @@ function HierarchyScreen() {
           emptyMessage="No campaigns yet."
         >
           {(list) => (
-            <div className="space-y-2">
+            <div className="space-y-2" role="tree" aria-label="Campaign hierarchy">
               {list.map((c) => {
                 const isOpen = !!open[c.id];
                 const groups = groupsByCampaign.get(c.id) ?? [];
                 const assets = creativesByCampaign.get(c.id) ?? [];
                 return (
-                  <div key={c.id} className="rounded-lg border border-border/50">
+                  <div key={c.id} role="none" className="rounded-lg border border-border/50">
                     <button
                       type="button"
+                      role="treeitem"
+                      aria-expanded={isOpen}
+                      aria-label={`${c.name}, ${groups.length} ad groups, ${assets.length} creatives`}
                       onClick={() => setOpen((p) => ({ ...p, [c.id]: !p[c.id] }))}
-                      className="flex w-full items-center justify-between gap-3 p-3 text-left"
+                      className="flex w-full items-center justify-between gap-3 rounded-lg p-3 text-left transition-colors hover:bg-secondary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <span className="flex min-w-0 items-center gap-2">
                         {isOpen ? (
@@ -126,7 +146,7 @@ function HierarchyScreen() {
                     </button>
 
                     {isOpen ? (
-                      <div className="space-y-3 border-t border-border/50 p-3">
+                      <div role="group" className="space-y-3 border-t border-border/50 p-3">
                         <div>
                           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                             Ad groups
@@ -187,7 +207,7 @@ function HierarchyScreen() {
                         </div>
 
                         <Button variant="outline" size="sm" asChild>
-                          <a href="/marketing/campaign-builder">Edit in Campaign Builder</a>
+                          <Link to="/marketing/campaign-builder">Edit in Campaign Builder</Link>
                         </Button>
                       </div>
                     ) : null}

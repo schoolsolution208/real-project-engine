@@ -96,7 +96,7 @@ async def main():
         await search.fill(""); await page.wait_for_timeout(500)
         check("campaigns search reset", await page.locator("table tbody tr").count() == rows_before)
 
-        headers = page.locator("table thead th button")
+        headers = page.locator("table thead th button:not([role=checkbox])")
         if await headers.count():
             first_cell = await page.locator("table tbody tr td").first.inner_text()
             await headers.first.click(); await page.wait_for_timeout(400)
@@ -121,8 +121,8 @@ async def main():
         await page.goto(BASE + "/marketing/campaign-builder", wait_until="domcontentloaded"); await settle(page)
         inputs = await page.locator("input, select, textarea, [role=combobox]").count()
         check("campaign builder form fields", inputs >= 5, f"fields={inputs}")
-        name_field = page.locator("input").first
-        await name_field.fill("E2E Preview Campaign"); await page.wait_for_timeout(300)
+        name_field = page.locator("#cf-name")
+        await name_field.fill("E2E Preview Campaign"); await page.wait_for_timeout(600)
         body = await page.inner_text("body")
         check("campaign builder live preview", "E2E Preview Campaign" in body)
         await page.screenshot(path=str(OUT / "03_builder.png"))
@@ -148,7 +148,11 @@ async def main():
 
         # --- Campaign detail rollup (hierarchy) ---
         await page.goto(BASE + "/marketing/hierarchy", wait_until="domcontentloaded"); await settle(page)
-        check("campaign hierarchy rollup", await page.locator("table tbody tr, [role=treeitem]").count() > 0)
+        tree = page.locator("[role=treeitem]")
+        check("campaign hierarchy rollup", await tree.count() > 0, f"nodes={await tree.count()}")
+        if await tree.count():
+            await tree.first.click(); await page.wait_for_timeout(400)
+            check("hierarchy drilldown expands", (await tree.first.get_attribute("aria-expanded")) == "true")
 
         # --- Analytics ---
         await page.goto(BASE + "/marketing/analytics", wait_until="domcontentloaded"); await settle(page)

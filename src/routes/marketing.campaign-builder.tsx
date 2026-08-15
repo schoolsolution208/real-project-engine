@@ -15,6 +15,7 @@ import {
   CampaignForm,
   campaignToForm,
   emptyCampaign,
+  generateCampaignCode,
   type CampaignFormValues,
 } from "@/components/marketing/campaign-form";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ import {
   type Row,
 } from "@/lib/marketing/api";
 import { compactInr, num, shortDate } from "@/lib/marketing/format";
+import { buildUtm, useMarketingSettings } from "@/lib/marketing/settings";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/marketing/campaign-builder")({
@@ -122,6 +124,7 @@ const emptyCreative = (): CreativeForm => ({
 });
 
 function CampaignBuilderScreen() {
+  const { settings } = useMarketingSettings();
   const campaigns = useQuery(tableQuery("marketing_campaigns", { column: "created_at" }));
   const adGroups = useQuery(tableQuery("marketing_ad_groups", { column: "created_at" }));
   const creatives = useQuery(tableQuery("marketing_creatives", { column: "created_at" }));
@@ -152,6 +155,13 @@ function CampaignBuilderScreen() {
   useEffect(() => {
     if (mode === "edit" && selected) setCampaignForm(campaignToForm(selected));
   }, [selected, mode]);
+
+  // Client-only: keeps the random code out of SSR output (hydration safety).
+  useEffect(() => {
+    if (mode === "create" && !campaignForm.code) {
+      setCampaignForm((f) => (f.code ? f : { ...f, code: generateCampaignCode() }));
+    }
+  }, [mode, campaignForm.code]);
 
   const [groupForm, setGroupForm] = useState<AdGroupForm | null>(null);
   const [editingGroup, setEditingGroup] = useState<AdGroup | null>(null);
@@ -364,7 +374,7 @@ function CampaignBuilderScreen() {
             size="sm"
             onClick={() => {
               setMode("create");
-              setCampaignForm(emptyCampaign());
+              setCampaignForm({ ...emptyCampaign(), code: generateCampaignCode() });
             }}
           >
             <Plus className="h-4 w-4" /> New campaign
@@ -455,6 +465,60 @@ function CampaignBuilderScreen() {
                 submitLabel={mode === "create" ? "Create campaign" : "Save changes"}
                 isPending={createCampaign.isPending || updateCampaign.isPending}
               />
+            </SectionCard>
+
+            <SectionCard
+              className="mt-4"
+              title="Live preview"
+              description="How this campaign will be recorded and tracked once saved. No delivery metrics are shown until the campaign runs."
+            >
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
+                <div className="rounded-lg border border-border/50 bg-secondary/30 p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StatusBadge value={campaignForm.status} />
+                    <span className="rounded-md bg-background/60 px-2 py-0.5 font-mono text-[11px] text-muted-foreground">
+                      {campaignForm.code || "CODE"}
+                    </span>
+                  </div>
+                  <p className="mt-2 truncate text-lg font-semibold">
+                    {campaignForm.name.trim() || "Untitled campaign"}
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {campaignForm.channel} · {campaignForm.objective.replace(/_/g, " ")} ·{" "}
+                    {campaignForm.region}
+                  </p>
+                  <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+                    {[
+                      ["Budget", compactInr(Number(campaignForm.budget || 0))],
+                      ["Starts", shortDate(campaignForm.start_date)],
+                      ["Ends", shortDate(campaignForm.end_date)],
+                      ["Owner", campaignForm.owner || "—"],
+                    ].map(([label, value]) => (
+                      <div key={label} className="min-w-0">
+                        <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</dt>
+                        <dd className="truncate font-medium">{value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  {campaignForm.kpi_target ? (
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      KPI target: <span className="text-foreground">{campaignForm.kpi_target}</span>
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="rounded-lg border border-border/50 p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Tracking (UTM)
+                  </p>
+                  <p className="mt-2 break-all font-mono text-[11px] leading-relaxed text-foreground">
+                    {buildUtm(settings, { code: campaignForm.code, channel: campaignForm.channel })}
+                  </p>
+                  <p className="mt-3 text-[11px] text-muted-foreground">
+                    Built from your UTM defaults in Marketing settings.
+                  </p>
+                </div>
+              </div>
             </SectionCard>
           </TabsContent>
 
