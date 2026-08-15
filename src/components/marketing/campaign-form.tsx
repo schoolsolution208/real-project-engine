@@ -75,8 +75,17 @@ const today = () => new Date().toISOString().slice(0, 10);
 const plusDays = (days: number) =>
   new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
 
+/**
+ * Campaign codes are random, so they must be generated on the client only —
+ * generating during SSR renders a different value than hydration and trips a
+ * React hydration mismatch. `emptyCampaign()` leaves it blank; the screen
+ * fills it in after mount via `generateCampaignCode()`.
+ */
+export const generateCampaignCode = () =>
+  `CMP-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+
 export const emptyCampaign = (): CampaignFormValues => ({
-  code: `CMP-${Math.random().toString(36).slice(2, 7).toUpperCase()}`,
+  code: "",
   name: "",
   channel: CAMPAIGN_CHANNELS[0],
   objective: "leads",

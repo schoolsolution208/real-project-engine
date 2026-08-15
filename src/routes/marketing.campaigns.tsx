@@ -35,6 +35,7 @@ import {
   CampaignForm,
   campaignToForm,
   emptyCampaign,
+  generateCampaignCode,
   type CampaignFormValues,
 } from "@/components/marketing/campaign-form";
 import { Button } from "@/components/ui/button";
@@ -273,7 +274,7 @@ function CampaignsScreen() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm(emptyCampaign());
+    setForm({ ...emptyCampaign(), code: generateCampaignCode() });
   };
 
   const openEdit = (c: Campaign) => {
@@ -563,7 +564,7 @@ function CampaignsScreen() {
             </Select>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="h-9 w-9" aria-label="Column visibility">
+                <Button variant="outline" size="icon" className="h-9 w-9" aria-label="Columns">
                   <Columns3 className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
