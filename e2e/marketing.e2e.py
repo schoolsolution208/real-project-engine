@@ -98,9 +98,9 @@ async def main():
 
         headers = page.locator("table thead th button:not([role=checkbox])")
         if await headers.count():
-            first_cell = await page.locator("table tbody tr td").first.inner_text()
+            first_cell = await page.locator("table tbody tr td").nth(1).inner_text()
             await headers.first.click(); await page.wait_for_timeout(400)
-            check("campaigns column sort", (await page.locator("table tbody tr td").first.inner_text()) != first_cell or rows_before == 1)
+            check("campaigns column sort", (await page.locator("table tbody tr td").nth(1).inner_text()) != first_cell or rows_before == 1)
         else:
             check("campaigns column sort", False, "no sortable header buttons")
 
